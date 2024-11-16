@@ -69,15 +69,8 @@
     </header>
     <div class="container">
         <div class="search-bar">
-            <input type="text" id="search" placeholder="Search for events...">
-            <select id="category">
-                <option value="">All Categories</option>
-                <option value="concerts">Concerts</option>
-                <option value="comedy">Comedy Shows</option>
-                <option value="movies">Movies</option>
-                <option value="sports">Sports</option>
-            </select>
-            <button onclick="searchEvents()">Search</button>
+            <input type="text" id="location" placeholder="Enter a location (e.g., Mumbai)">
+            <button onclick="fetchEvents()">Find Events</button>
         </div>
         <div class="events" id="event-list">
             <!-- Event Cards Will Be Populated Here -->
@@ -85,44 +78,40 @@
     </div>
 
     <script>
-        // Sample Data (Replace with API Fetch Calls)
-        const events = [
-            { title: "Rock Concert", date: "2024-11-20", category: "Concerts", location: "Mumbai" },
-            { title: "Comedy Night", date: "2024-11-21", category: "Comedy", location: "Delhi" },
-            { title: "Movie Premiere", date: "2024-11-22", category: "Movies", location: "Bangalore" },
-            { title: "Football Match", date: "2024-11-23", category: "Sports", location: "Kolkata" },
-        ];
-
         const eventList = document.getElementById('event-list');
 
-        function displayEvents(eventsToDisplay) {
-            eventList.innerHTML = '';
-            eventsToDisplay.forEach(event => {
-                const card = `
-                    <div class="event-card">
-                        <h3>${event.title}</h3>
-                        <p><strong>Date:</strong> ${event.date}</p>
-                        <p><strong>Category:</strong> ${event.category}</p>
-                        <p><strong>Location:</strong> ${event.location}</p>
-                        <button>View Details</button>
-                    </div>
-                `;
-                eventList.innerHTML += card;
-            });
-        }
+        async function fetchEvents() {
+            const location = document.getElementById('location').value;
+            const apiKey = 'AIzaSyBv-ABYMRiZ0anhr4wOuWlDrUlPIORxNsw'; // Replace with your Google API key
+            const endpoint = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=events+in+${location}&key=${apiKey}`;
 
-        function searchEvents() {
-            const searchText = document.getElementById('search').value.toLowerCase();
-            const category = document.getElementById('category').value;
-            const filteredEvents = events.filter(event =>
-                (event.title.toLowerCase().includes(searchText) || event.location.toLowerCase().includes(searchText)) &&
-                (category === "" || event.category.toLowerCase() === category.toLowerCase())
-            );
-            displayEvents(filteredEvents);
-        }
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
 
-        // Initial Display
-        displayEvents(events);
+                // Clear previous events
+                eventList.innerHTML = '';
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(event => {
+                        const card = `
+                            <div class="event-card">
+                                <h3>${event.name}</h3>
+                                <p><strong>Address:</strong> ${event.formatted_address}</p>
+                                <p><strong>Rating:</strong> ${event.rating || 'N/A'}</p>
+                                <button>View Details</button>
+                            </div>
+                        `;
+                        eventList.innerHTML += card;
+                    });
+                } else {
+                    eventList.innerHTML = '<p>No events found for the specified location.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching events:', error);
+                eventList.innerHTML = '<p>Failed to fetch events. Please try again later.</p>';
+            }
+        }
     </script>
 </body>
 </html>
